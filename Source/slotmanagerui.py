@@ -329,6 +329,29 @@ def _save_data(
     tree.write(xml_path, encoding="utf-8", xml_declaration=True)
 
 
+def _render_status_badges(trial_days_left: int | None, access_state: str, top_margin: str = "0.15rem") -> None:
+    status_cols = st.columns([2.2, 2.2])
+    with status_cols[0]:
+        st.markdown(
+            f"""
+            <div style="margin-top: {top_margin}; padding: 0.55rem 0.85rem; border-radius: 10px; background: #f5f7fb; color: #4a5568; border: 1px solid #d9e2ec; font-size: 0.95rem;">
+                This planner works by weekday (day), not calendar date.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with status_cols[1]:
+        if access_state == "trial":
+            st.markdown(
+                f"""
+                <div style="margin-top: {top_margin}; padding: 0.55rem 0.85rem; border-radius: 10px; background: #fff4e5; color: #8a4b08; border: 1px solid #f2c078; font-size: 0.95rem;">
+                    Approval is pending; trial access expires in {trial_days_left} day(s).
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+
 def _generate_daily_slots(
     target_date: date,
     schedule_config: dict[str, dict[str, dict[str, str]]],
@@ -731,36 +754,10 @@ access_state, trial_days_left = _evaluate_trial_access(company_submissions)
 if access_state == "expired":
     st.error("Please contact the administrator")
     st.stop()
-elif access_state == "trial" and menu_choice not in {"Slot Dashboard", "Slot Overview"}:
-    st.warning(f"Approval is pending; trial access expires in {trial_days_left} day(s).")
-
-if menu_choice not in {"Slot Dashboard", "Slot Overview"}:
-    st.caption(
-        "This planner works by weekday (day), not calendar date."
-    )
 
 # Check menu selection and display appropriate content
 if menu_choice == "Slot Overview":
-    overview_status_cols = st.columns([2.2, 2.2])
-    with overview_status_cols[0]:
-        st.markdown(
-            """
-            <div style="margin-top: 0.15rem; padding: 0.55rem 0.85rem; border-radius: 10px; background: #f5f7fb; color: #4a5568; border: 1px solid #d9e2ec; font-size: 0.95rem;">
-                This planner works by weekday (day), not calendar date.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with overview_status_cols[1]:
-        if access_state == "trial":
-            st.markdown(
-                f"""
-                <div style="margin-top: 0.15rem; padding: 0.55rem 0.85rem; border-radius: 10px; background: #fff4e5; color: #8a4b08; border: 1px solid #f2c078; font-size: 0.95rem;">
-                    Approval is pending; trial access expires in {trial_days_left} day(s).
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    _render_status_badges(trial_days_left, access_state)
     overview_filter_cols = st.columns([1.2, 2.4])
     with overview_filter_cols[0]:
         st.markdown(
@@ -781,6 +778,7 @@ if menu_choice == "Slot Overview":
     st.dataframe(overview_df, use_container_width=True, hide_index=True)
     st.stop()
 elif menu_choice == "Slot Management":
+    _render_status_badges(trial_days_left, access_state)
     st.subheader("⚙️ Slot Management")
     st.subheader("Schedule Setup")
     selected_schedule_day_label = st.selectbox("Select Day", options=WEEKDAY_LABELS, key="schedule_day_select")
@@ -853,6 +851,7 @@ elif menu_choice == "Slot Management":
             st.rerun()
     st.stop()
 elif menu_choice == "Company Management":
+    _render_status_badges(trial_days_left, access_state)
     st.subheader("🏢 Company Management")
 
     latest_submission = company_submissions[-1] if company_submissions else None
@@ -911,6 +910,7 @@ elif menu_choice == "Company Management":
         )
     st.stop()
 elif menu_choice == "Settings":
+    _render_status_badges(trial_days_left, access_state)
     if not st.session_state.super_user_authenticated:
         st.warning("Super User authentication is required to access Settings.")
         with st.form("super_user_form"):
@@ -978,28 +978,8 @@ elif menu_choice == "Settings":
     st.stop()
 
 # Default: Show Slot Dashboard
-dashboard_cols = st.columns([1.4, 2.2, 2.2])
-with dashboard_cols[0]:
-    st.subheader("📈 Slot Dashboard")
-with dashboard_cols[1]:
-    st.markdown(
-        """
-        <div style="margin-top: 0.35rem; padding: 0.55rem 0.85rem; border-radius: 10px; background: #f5f7fb; color: #4a5568; border: 1px solid #d9e2ec; font-size: 0.95rem;">
-            This planner works by weekday (day), not calendar date.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-with dashboard_cols[2]:
-    if access_state == "trial":
-        st.markdown(
-            f"""
-            <div style="margin-top: 0.35rem; padding: 0.55rem 0.85rem; border-radius: 10px; background: #fff4e5; color: #8a4b08; border: 1px solid #f2c078; font-size: 0.95rem;">
-                Approval is pending; trial access expires in {trial_days_left} day(s).
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+st.subheader("📈 Slot Dashboard")
+_render_status_badges(trial_days_left, access_state, top_margin="0.35rem")
 
 selected_working_day_label = st.sidebar.selectbox("Select Working Day", options=WEEKDAY_LABELS, key="working_day_select")
 selected_working_day_index = WEEKDAY_LABELS.index(selected_working_day_label)
