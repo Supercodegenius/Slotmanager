@@ -731,7 +731,7 @@ access_state, trial_days_left = _evaluate_trial_access(company_submissions)
 if access_state == "expired":
     st.error("Please contact the administrator")
     st.stop()
-elif access_state == "trial":
+elif access_state == "trial" and menu_choice != "Slot Dashboard":
     st.warning(f"Approval is pending; trial access expires in {trial_days_left} day(s).")
 
 st.caption(
@@ -949,7 +949,19 @@ elif menu_choice == "Settings":
     st.stop()
 
 # Default: Show Slot Dashboard
-st.subheader("📈 Slot Dashboard")
+dashboard_title_col, dashboard_status_col = st.columns([2, 3])
+with dashboard_title_col:
+    st.subheader("📈 Slot Dashboard")
+with dashboard_status_col:
+    if access_state == "trial":
+        st.markdown(
+            f"""
+            <div style="margin-top: 0.35rem; padding: 0.55rem 0.85rem; border-radius: 10px; background: #fff4e5; color: #8a4b08; border: 1px solid #f2c078; font-size: 0.95rem;">
+                Approval is pending; trial access expires in {trial_days_left} day(s).
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 selected_working_day_label = st.sidebar.selectbox("Select Working Day", options=WEEKDAY_LABELS, key="working_day_select")
 selected_working_day_index = WEEKDAY_LABELS.index(selected_working_day_label)
