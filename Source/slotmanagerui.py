@@ -761,11 +761,19 @@ if menu_choice == "Slot Overview":
                 """,
                 unsafe_allow_html=True,
             )
-    selected_working_day_label = st.selectbox(
-        "Select Working Day",
-        options=WEEKDAY_LABELS,
-        key="overview_working_day_select",
-    )
+    overview_filter_cols = st.columns([1.2, 2.4])
+    with overview_filter_cols[0]:
+        st.markdown(
+            "<div style='padding-top: 0.55rem; font-weight: 600;'>Select Working Day</div>",
+            unsafe_allow_html=True,
+        )
+    with overview_filter_cols[1]:
+        selected_working_day_label = st.selectbox(
+            "Select Working Day",
+            options=WEEKDAY_LABELS,
+            key="overview_working_day_select",
+            label_visibility="collapsed",
+        )
     selected_working_day_index = WEEKDAY_LABELS.index(selected_working_day_label)
     selected_date = WEEKDAY_ANCHOR_DATES[selected_working_day_index]
     overview_df = pd.DataFrame(_build_overview_rows(selected_date, bookings_data, schedule_config))
