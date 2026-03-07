@@ -950,33 +950,28 @@ elif menu_choice == "Settings":
     st.stop()
 
 # Default: Show Slot Dashboard
-dashboard_title_col, dashboard_status_col = st.columns([2, 3])
-with dashboard_title_col:
+dashboard_cols = st.columns([1.4, 2.2, 2.2])
+with dashboard_cols[0]:
     st.subheader("📈 Slot Dashboard")
-with dashboard_status_col:
-    status_parts = [
-        """
-        <div style="padding: 0.55rem 0.85rem; border-radius: 10px; background: #f5f7fb; color: #4a5568; border: 1px solid #d9e2ec; font-size: 0.95rem;">
-            This planner works by weekday (day), not calendar date.
-        </div>
-        """
-    ]
-    if access_state == "trial":
-        status_parts.append(
-            f"""
-            <div style="padding: 0.55rem 0.85rem; border-radius: 10px; background: #fff4e5; color: #8a4b08; border: 1px solid #f2c078; font-size: 0.95rem;">
-                Approval is pending; trial access expires in {trial_days_left} day(s).
-            </div>
-            """
-        )
+with dashboard_cols[1]:
     st.markdown(
-        f"""
-        <div style="margin-top: 0.35rem; display: flex; gap: 0.5rem; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
-            {''.join(status_parts)}
+        """
+        <div style="margin-top: 0.35rem; padding: 0.55rem 0.85rem; border-radius: 10px; background: #f5f7fb; color: #4a5568; border: 1px solid #d9e2ec; font-size: 0.95rem;">
+            This planner works by weekday (day), not calendar date.
         </div>
         """,
         unsafe_allow_html=True,
     )
+with dashboard_cols[2]:
+    if access_state == "trial":
+        st.markdown(
+            f"""
+            <div style="margin-top: 0.35rem; padding: 0.55rem 0.85rem; border-radius: 10px; background: #fff4e5; color: #8a4b08; border: 1px solid #f2c078; font-size: 0.95rem;">
+                Approval is pending; trial access expires in {trial_days_left} day(s).
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 selected_working_day_label = st.sidebar.selectbox("Select Working Day", options=WEEKDAY_LABELS, key="working_day_select")
 selected_working_day_index = WEEKDAY_LABELS.index(selected_working_day_label)
