@@ -651,7 +651,7 @@ def _apply_drag_layout(
 
 st.set_page_config(
     page_title="Daily Slot Dashboard",
-    page_icon=os.path.join(BASE_DIR, "assets", "favicon-braincal.png"),
+    page_icon=os.path.join(BASE_DIR, "assets", "favicon-bc.svg"),
     layout="wide",
 )
 

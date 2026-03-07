@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="BrainCal favicon">
+  <defs>
+    <linearGradient id="bcBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10A4FF" />
+      <stop offset="100%" stop-color="#0076E8" />
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="none" />
+  <g fill="none" stroke="url(#bcBlue)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M66 58v108" stroke-width="20" />
+    <path d="M92 46v88" stroke-width="20" />
+    <path d="M118 34v88" stroke-width="20" />
+    <path d="M64 134c0-10 8-18 18-18h32" stroke-width="20" />
+    <path d="M128 72v52c0 28 22 50 50 50" stroke-width="20" />
+    <path d="M188 176a58 58 0 1 1 0-82" stroke-width="20" />
+    <path d="M188 176l-6 6" stroke-width="20" />
+  </g>
+</svg>
