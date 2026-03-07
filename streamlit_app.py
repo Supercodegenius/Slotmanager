@@ -1,23 +1,29 @@
-import os
-from pathlib import Path
 import runpy
+import sys
+from pathlib import Path
 
 
-def _locate_ui_script() -> Path:
-    script_root = Path(__file__).resolve()
-    search_paths = [script_root.parent, *script_root.parents, Path.cwd()]
+SOURCE_REL = Path("Source") / "name_matchingUI.py"
+
+
+def _find_repo_root() -> Path:
+    search_dirs = [
+        Path.cwd(),
+        Path(__file__).resolve().parent,
+        *Path(__file__).resolve().parents,
+    ]
     tried = []
-    for directory in search_paths:
-        candidate = directory / "Source" / "name_matchingUI.py"
+    for directory in search_dirs:
+        candidate = directory / SOURCE_REL
         tried.append(candidate)
         if candidate.is_file():
-            return candidate
+            return directory
     raise FileNotFoundError(
         "Could not locate Source/name_matchingUI.py.\n"
         + "\n".join(f"  {path}" for path in tried)
     )
 
 
-_ui_script = _locate_ui_script()
-APP_PATH = _ui_script.as_posix() if os.name != "nt" else str(_ui_script)
-runpy.run_path(APP_PATH, run_name="__main__")
+repo_root = _find_repo_root()
+sys.path.insert(0, str(repo_root))
+runpy.run_module("Source.name_matchingUI", run_name="__main__")
