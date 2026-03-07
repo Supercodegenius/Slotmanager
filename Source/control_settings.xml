@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<controls>
+  <control id="data_upload_button" type="button" label="Data Upload" enabled="true" />
+  <control id="data_preview_button" type="button" label="Data Preview" enabled="true" />
+  <control id="run_name_matching_button" type="button" label="Run name matching" enabled="false" />
+  <control id="clear_chat_button" type="button" label="Clear chat" enabled="true" />
+  <control id="best_method_button" type="button" label="Best method?" enabled="true" />
+  <control id="tune_threshold_button" type="button" label="Tune threshold" enabled="true" />
+  <control id="explain_mismatch_button" type="button" label="Explain mismatch" enabled="true" />
+  <control id="show_data_previews_checkbox" type="checkbox" label="Show data previews" enabled="true" />
+  <control id="show_only_matches_checkbox" type="checkbox" label="Show only matched rows" enabled="true" />
+  <control id="include_location_checkbox" type="checkbox" label="Include Location" enabled="true" />
+  <control id="include_industry_checkbox" type="checkbox" label="Include Industry" enabled="true" />
+  <control id="include_app_context_checkbox" type="checkbox" label="Include current app context" enabled="true" />
+</controls>

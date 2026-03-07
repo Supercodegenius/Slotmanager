@@ -655,42 +655,157 @@ st.set_page_config(
     layout="wide",
 )
 
-# Add branding header at the very top
+# Global styling: refine-inspired, airy SaaS aesthetic.
 st.markdown("""
-    <div style="background: linear-gradient(90deg, #003D82 0%, #0056B3 100%); padding: 20px 30px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">AI Powered Slot Dashboard</h1>
-            <div style="color: #FF6B6B; font-size: 16px; font-weight: bold;">By BrainCal Tech Team <a href="https://braincal.com" target="_blank" style="color: #FF6B6B; text-decoration: none;">https://braincal.com</a></div>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
-
-# Styled menu buttons with icons
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 📋 Navigation Menu")
-st.sidebar.markdown("---")
-
-# Custom CSS for menu buttons
-st.sidebar.markdown("""
     <style>
-    .menu-button {
-        padding: 12px;
-        margin: 5px 0;
-        border-radius: 8px;
-        font-weight: bold;
-        text-align: left;
-        cursor: pointer;
-        transition: all 0.3s ease;
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap');
+
+    :root {
+        --bg: #0b0f1a;
+        --bg-soft: #0f1526;
+        --panel: #121a2e;
+        --panel-2: #161f36;
+        --accent: #63f2c8;
+        --accent-2: #5b8cff;
+        --accent-3: #f7c948;
+        --text: #e7edf7;
+        --muted: #9fb0cc;
+        --border: #263152;
+        --shadow: 0 16px 48px rgba(4, 10, 25, 0.5);
+    }
+
+    html, body, [data-testid="stAppViewContainer"] {
+        background: radial-gradient(1200px 600px at 80% -10%, rgba(91, 140, 255, 0.25), transparent 60%),
+                    radial-gradient(900px 500px at 10% 10%, rgba(99, 242, 200, 0.2), transparent 55%),
+                    var(--bg);
+        color: var(--text);
+        font-family: 'Manrope', sans-serif;
+    }
+
+    .main .block-container {
+        padding-top: 1.5rem;
+        padding-bottom: 3rem;
+    }
+
+    h1, h2, h3, h4, h5 {
+        font-family: 'Space Grotesk', sans-serif;
+        color: var(--text);
+        letter-spacing: -0.01em;
+    }
+
+    .refine-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        padding: 28px 32px;
+        background: linear-gradient(135deg, rgba(22, 31, 54, 0.95), rgba(18, 26, 46, 0.9));
+        border: 1px solid rgba(99, 242, 200, 0.2);
+        box-shadow: var(--shadow);
+        margin-bottom: 22px;
+    }
+    .refine-hero::after {
+        content: "";
+        position: absolute;
+        inset: -60% -20% auto auto;
+        width: 340px;
+        height: 340px;
+        background: radial-gradient(circle, rgba(99, 242, 200, 0.35), transparent 60%);
+        filter: blur(0);
+        opacity: 0.9;
+    }
+    .refine-hero::before {
+        content: "";
+        position: absolute;
+        inset: auto auto -50% -10%;
+        width: 280px;
+        height: 280px;
+        background: radial-gradient(circle, rgba(91, 140, 255, 0.4), transparent 60%);
+        opacity: 0.7;
+    }
+    .refine-hero h1 {
+        font-size: 30px;
+        margin: 0 0 6px 0;
+    }
+    .refine-hero p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+    }
+    .refine-hero .hero-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(99, 242, 200, 0.12);
+        border: 1px solid rgba(99, 242, 200, 0.35);
+        color: var(--accent);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, rgba(15, 21, 38, 0.98), rgba(11, 15, 26, 0.98));
+        border-right: 1px solid var(--border);
     }
     [data-testid="stSidebar"] .stButton > button {
-        justify-content: flex-start !important;
-        text-align: left !important;
+        background: rgba(22, 31, 54, 0.85);
+        color: var(--text);
+        border: 1px solid rgba(99, 242, 200, 0.2);
+        border-radius: 12px;
+        padding: 0.6rem 0.9rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        box-shadow: none;
     }
-    </style>
-""", unsafe_allow_html=True)
+    [data-testid="stSidebar"] .stButton > button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(99, 242, 200, 0.6);
+        box-shadow: 0 8px 18px rgba(6, 12, 26, 0.45);
+    }
+    [data-testid="stSidebar"] .stButton > button:focus-visible {
+        outline: 2px solid rgba(99, 242, 200, 0.6);
+        outline-offset: 2px;
+    }
 
-st.markdown("""
-    <style>
+    .stTextInput > div > div,
+    .stNumberInput > div > div,
+    .stSelectbox > div > div,
+    .stDateInput > div > div,
+    .stMultiSelect > div > div {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: var(--text);
+    }
+
+    .stDataFrame, .stTable {
+        background: var(--panel);
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        box-shadow: 0 14px 30px rgba(5, 10, 24, 0.35);
+    }
+    [data-testid="stDataFrame"] div[role="grid"] {
+        border-radius: 14px;
+    }
+    [data-testid="stDataFrame"] thead tr th {
+        background: rgba(22, 31, 54, 0.95) !important;
+        color: var(--muted) !important;
+    }
+    [data-testid="stDataFrame"] tbody tr:hover {
+        background: rgba(99, 242, 200, 0.08) !important;
+    }
+
+    .stCaption {
+        color: var(--muted) !important;
+    }
+
+    .stAlert {
+        border-radius: 12px;
+        border: 1px solid rgba(99, 242, 200, 0.2);
+    }
+
     [data-testid="stStatusWidget"],
     [data-testid="stDecoration"],
     #MainMenu,
@@ -699,6 +814,34 @@ st.markdown("""
         opacity: 1 !important;
         height: auto !important;
         pointer-events: auto !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Add branding header at the very top
+st.markdown("""
+    <div class="refine-hero">
+        <div class="hero-pill">AI Slot Orchestrator</div>
+        <h1>AI Powered Slot Dashboard</h1>
+        <p>Streamline pupil scheduling, approvals, and allocations in one intelligent workspace.</p>
+    </div>
+""", unsafe_allow_html=True)
+
+# Styled menu buttons with icons
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 📋 Navigation Menu")
+st.sidebar.markdown("---")
+
+# Keep sidebar buttons aligned left
+st.sidebar.markdown("""
+    <style>
+    [data-testid="stSidebar"] .stButton > button {
+        justify-content: flex-start !important;
+        text-align: left !important;
+        padding-left: 0.9rem !important;
+    }
+    [data-testid="stSidebar"] .stButton > button > div {
+        justify-content: flex-start !important;
     }
     </style>
 """, unsafe_allow_html=True)
