@@ -1002,7 +1002,6 @@ with metrics_col2:
 with metrics_col3:
     st.metric("Booked Students", all_daily_bookings)
 
-st.caption("Added pupils for this day:")
 if daily_pool:
     pupils_list = ", ".join([x["pupil_name"] for x in daily_pool])
     st.write(f"**{pupils_list}**")
