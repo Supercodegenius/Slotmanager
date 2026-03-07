@@ -731,16 +731,36 @@ access_state, trial_days_left = _evaluate_trial_access(company_submissions)
 if access_state == "expired":
     st.error("Please contact the administrator")
     st.stop()
-elif access_state == "trial" and menu_choice != "Slot Dashboard":
+elif access_state == "trial" and menu_choice not in {"Slot Dashboard", "Slot Overview"}:
     st.warning(f"Approval is pending; trial access expires in {trial_days_left} day(s).")
 
-if menu_choice != "Slot Dashboard":
+if menu_choice not in {"Slot Dashboard", "Slot Overview"}:
     st.caption(
         "This planner works by weekday (day), not calendar date."
     )
 
 # Check menu selection and display appropriate content
 if menu_choice == "Slot Overview":
+    overview_status_cols = st.columns([2.2, 2.2])
+    with overview_status_cols[0]:
+        st.markdown(
+            """
+            <div style="margin-top: 0.15rem; padding: 0.55rem 0.85rem; border-radius: 10px; background: #f5f7fb; color: #4a5568; border: 1px solid #d9e2ec; font-size: 0.95rem;">
+                This planner works by weekday (day), not calendar date.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with overview_status_cols[1]:
+        if access_state == "trial":
+            st.markdown(
+                f"""
+                <div style="margin-top: 0.15rem; padding: 0.55rem 0.85rem; border-radius: 10px; background: #fff4e5; color: #8a4b08; border: 1px solid #f2c078; font-size: 0.95rem;">
+                    Approval is pending; trial access expires in {trial_days_left} day(s).
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
     selected_working_day_label = st.selectbox(
         "Select Working Day",
         options=WEEKDAY_LABELS,
