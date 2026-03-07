@@ -665,11 +665,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Styled menu buttons with icons
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 📋 Navigation Menu")
-st.sidebar.markdown("---")
-
 # Keep sidebar buttons aligned left
 st.sidebar.markdown("""
     <style>
