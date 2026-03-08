@@ -1,5 +1,6 @@
 ﻿from __future__ import annotations
 
+import hashlib
 import os
 from datetime import date, datetime, time, timedelta
 import xml.etree.ElementTree as ET
@@ -59,6 +60,22 @@ def _default_schedule_config() -> dict[str, dict[str, dict[str, str]]]:
 
 def _default_company_submissions() -> list[dict[str, str]]:
     return []
+
+
+def _normalize_email(value: str) -> str:
+    return value.strip().casefold()
+
+
+def _hash_password(password: str) -> str:
+    return f"sha256${hashlib.sha256(password.encode('utf-8')).hexdigest()}"
+
+
+def _password_matches(raw_password: str, stored_password: str) -> bool:
+    if not stored_password:
+        return False
+    if stored_password.startswith("sha256$"):
+        return _hash_password(raw_password) == stored_password
+    return raw_password == stored_password
 
 
 def _parse_int(value: str, fallback: int) -> int:
@@ -243,6 +260,16 @@ def _load_company_submissions(xml_path: str) -> list[dict[str, str]]:
     return _default_company_submissions()
 
 
+def _latest_company_submission(company_submissions: list[dict[str, str]], email_id: str) -> dict[str, str] | None:
+    normalized_email = _normalize_email(email_id)
+    matches = [
+        submission
+        for submission in company_submissions
+        if _normalize_email(submission.get("email_id", "")) == normalized_email
+    ]
+    return matches[-1] if matches else None
+
+
 def _save_data(
     xml_path: str,
     bookings: list[dict[str, str]],
@@ -390,8 +417,11 @@ def _parse_iso_datetime(value: str) -> datetime | None:
         return None
 
 
-def _evaluate_trial_access(company_submissions: list[dict[str, str]]) -> tuple[str, int | None]:
-    latest = company_submissions[-1] if company_submissions else None
+def _evaluate_trial_access(
+    company_submissions: list[dict[str, str]],
+    email_id: str | None = None,
+) -> tuple[str, int | None]:
+    latest = _latest_company_submission(company_submissions, email_id) if email_id else (company_submissions[-1] if company_submissions else None)
     if not latest or latest.get("status") == "approved":
         return "approved", None
     submitted_at = _parse_iso_datetime(latest.get("submitted_at_utc", ""))
@@ -742,6 +772,12 @@ if "menu_choice" not in st.session_state:
     st.session_state.menu_choice = "Slot Dashboard"
 if "super_user_authenticated" not in st.session_state:
     st.session_state.super_user_authenticated = False
+if "company_user_authenticated" not in st.session_state:
+    st.session_state.company_user_authenticated = False
+if "authenticated_company_email" not in st.session_state:
+    st.session_state.authenticated_company_email = ""
+if "authenticated_company_name" not in st.session_state:
+    st.session_state.authenticated_company_name = ""
 
 menu_choice = st.session_state.menu_choice
 
@@ -750,10 +786,26 @@ pool_data = _load_pool(XML_PATH)
 schedule_config = _load_schedule_config(XML_PATH)
 company_submissions = _load_company_submissions(XML_PATH)
 
-access_state, trial_days_left = _evaluate_trial_access(company_submissions)
-if access_state == "expired":
-    st.error("Please contact the administrator")
+authenticated_company_email = st.session_state.authenticated_company_email
+authenticated_company_name = st.session_state.authenticated_company_name
+company_user_authenticated = st.session_state.company_user_authenticated
+super_user_authenticated = st.session_state.super_user_authenticated
+
+if super_user_authenticated:
+    access_state, trial_days_left = "approved", None
+elif company_user_authenticated and authenticated_company_email:
+    access_state, trial_days_left = _evaluate_trial_access(company_submissions, authenticated_company_email)
+else:
+    access_state, trial_days_left = _evaluate_trial_access(company_submissions)
+
+if company_user_authenticated and access_state == "expired" and menu_choice != "Company Management":
+    st.error("Your company access has expired. Please contact the administrator.")
     st.stop()
+
+if super_user_authenticated:
+    st.sidebar.success("Signed in as Super User")
+elif company_user_authenticated and authenticated_company_email:
+    st.sidebar.info(f"Signed in: {authenticated_company_name}")
 
 # Check menu selection and display appropriate content
 if menu_choice == "Slot Overview":
@@ -853,61 +905,114 @@ elif menu_choice == "Slot Management":
 elif menu_choice == "Company Management":
     _render_status_badges(trial_days_left, access_state)
     st.subheader("🏢 Company Management")
-
-    latest_submission = company_submissions[-1] if company_submissions else None
-
-    with st.form("company_setup_form"):
-        company_name_input = st.text_input(
-            "Company Name",
-            value=latest_submission.get("company_name", "") if latest_submission else "",
-        )
-        email_input = st.text_input(
-            "Email ID",
-            value=latest_submission.get("email_id", "") if latest_submission else "",
-        )
-        password_input = st.text_input("Password", type="password")
-        confirm_password_input = st.text_input("Confirm Password", type="password")
-        send_for_approval_clicked = st.form_submit_button("Send for Approval")
-
-    if send_for_approval_clicked:
-        company_name = company_name_input.strip()
-        email_id = email_input.strip()
-        if not company_name:
-            st.error("Company Name is required.")
-        elif not email_id:
-            st.error("Email ID is required.")
-        elif not _is_valid_email(email_id):
-            st.error("Please enter a valid Email ID.")
-        elif not password_input:
-            st.error("Password is required.")
-        elif password_input != confirm_password_input:
-            st.error("Password and Confirm Password must match.")
+    header_cols = st.columns([4, 1])
+    with header_cols[0]:
+        if company_user_authenticated and authenticated_company_email:
+            st.caption(f"Logged in as {authenticated_company_name} ({authenticated_company_email})")
         else:
-            duplicate = any(
-                submission["company_name"].casefold() == company_name.casefold()
-                and submission["email_id"].casefold() == email_id.casefold()
-                for submission in company_submissions
-            )
-            if duplicate:
-                st.error("A submission with this company name and email already exists.")
-            else:
-                new_submission = {
-                    "company_name": company_name,
-                    "email_id": email_id,
-                    "password": password_input,
-                    "status": "pending_approval",
-                    "submitted_at_utc": datetime.utcnow().isoformat(timespec="seconds"),
-                }
-                company_submissions.append(new_submission)
-                _save_data(XML_PATH, bookings_data, pool_data, schedule_config, company_submissions)
-                st.success("Company details sent for approval and saved.")
-                st.rerun()
+            st.caption("Register a company account or log in to view your company profile.")
+    with header_cols[1]:
+        if company_user_authenticated and st.button("Logout", key="company_logout", use_container_width=True):
+            st.session_state.company_user_authenticated = False
+            st.session_state.authenticated_company_email = ""
+            st.session_state.authenticated_company_name = ""
+            st.rerun()
 
-    if latest_submission:
-        st.caption(
-            f"Latest submission: {latest_submission.get('company_name')} "
-            f"({latest_submission.get('email_id')}) | Status: {latest_submission.get('status', 'N/A')}"
-        )
+    register_tab, login_tab, account_tab = st.tabs(["Register Company", "Login", "My Company"])
+
+    with register_tab:
+        if company_user_authenticated:
+            st.info("Log out before registering another company.")
+        else:
+            with st.form("company_setup_form"):
+                company_name_input = st.text_input("Company Name")
+                email_input = st.text_input("Email ID")
+                password_input = st.text_input("Password", type="password")
+                confirm_password_input = st.text_input("Confirm Password", type="password")
+                send_for_approval_clicked = st.form_submit_button("Register Company")
+
+            if send_for_approval_clicked:
+                company_name = company_name_input.strip()
+                email_id = email_input.strip()
+                normalized_email = _normalize_email(email_id)
+                if not company_name:
+                    st.error("Company Name is required.")
+                elif not email_id:
+                    st.error("Email ID is required.")
+                elif not _is_valid_email(email_id):
+                    st.error("Please enter a valid Email ID.")
+                elif not password_input:
+                    st.error("Password is required.")
+                elif password_input != confirm_password_input:
+                    st.error("Password and Confirm Password must match.")
+                else:
+                    duplicate = any(
+                        _normalize_email(submission.get("email_id", "")) == normalized_email
+                        or submission.get("company_name", "").strip().casefold() == company_name.casefold()
+                        for submission in company_submissions
+                    )
+                    if duplicate:
+                        st.error("A company with this name or email already exists.")
+                    else:
+                        new_submission = {
+                            "company_name": company_name,
+                            "email_id": email_id,
+                            "password": _hash_password(password_input),
+                            "status": "pending_approval",
+                            "submitted_at_utc": datetime.utcnow().isoformat(timespec="seconds"),
+                        }
+                        company_submissions.append(new_submission)
+                        _save_data(XML_PATH, bookings_data, pool_data, schedule_config, company_submissions)
+                        st.success("Company registered. You can now log in with these details.")
+                        st.rerun()
+
+    with login_tab:
+        if company_user_authenticated and authenticated_company_email:
+            st.success(f"You are already logged in as {authenticated_company_name}.")
+        else:
+            with st.form("company_login_form"):
+                login_email_input = st.text_input("Email ID", key="company_login_email")
+                login_password_input = st.text_input("Password", type="password", key="company_login_password")
+                login_clicked = st.form_submit_button("Login")
+
+            if login_clicked:
+                matched_company = _latest_company_submission(company_submissions, login_email_input)
+                if matched_company is None:
+                    st.error("No company account found for that email.")
+                elif not _password_matches(login_password_input, matched_company.get("password", "")):
+                    st.error("Invalid email or password.")
+                else:
+                    company_access_state, _ = _evaluate_trial_access(company_submissions, login_email_input)
+                    if company_access_state == "expired":
+                        st.error("This company account has expired. Please contact the administrator.")
+                    else:
+                        st.session_state.company_user_authenticated = True
+                        st.session_state.authenticated_company_email = matched_company.get("email_id", "").strip()
+                        st.session_state.authenticated_company_name = matched_company.get("company_name", "").strip()
+                        st.success("Company login successful.")
+                        st.rerun()
+
+    with account_tab:
+        if company_user_authenticated and authenticated_company_email:
+            visible_company = _latest_company_submission(company_submissions, authenticated_company_email)
+            if visible_company is None:
+                st.warning("The logged-in company record could not be found.")
+            else:
+                st.write(f"**Company Name:** {visible_company.get('company_name') or '-'}")
+                st.write(f"**Email ID:** {visible_company.get('email_id') or '-'}")
+                st.write(f"**Status:** {visible_company.get('status') or 'pending_approval'}")
+                st.write(f"**Submitted At (UTC):** {visible_company.get('submitted_at_utc') or 'N/A'}")
+                if visible_company.get("status") != "approved":
+                    company_access_state, company_trial_days_left = _evaluate_trial_access(
+                        company_submissions,
+                        authenticated_company_email,
+                    )
+                    if company_access_state == "trial":
+                        st.info(f"Approval is pending. Trial access expires in {company_trial_days_left} day(s).")
+                    elif company_access_state == "expired":
+                        st.error("Trial access has expired. Please contact the administrator.")
+        else:
+            st.info("Log in to see your company details. Regular users only see their own company here.")
     st.stop()
 elif menu_choice == "Settings":
     _render_status_badges(trial_days_left, access_state)
@@ -926,8 +1031,14 @@ elif menu_choice == "Settings":
                     st.error("Invalid super user password.")
         if not st.session_state.super_user_authenticated:
             st.stop()
-    st.subheader("⚙️ Settings")
-    st.caption("Review company submissions and toggle approval to move them forward.")
+    settings_header_cols = st.columns([4, 1])
+    with settings_header_cols[0]:
+        st.subheader("⚙️ Settings")
+        st.caption("Review all registered companies and toggle approval to move them forward.")
+    with settings_header_cols[1]:
+        if st.button("Lock Settings", key="lock_settings", use_container_width=True):
+            st.session_state.super_user_authenticated = False
+            st.rerun()
     if access_state == "trial":
         st.caption("Unapproved submissions expire 30 days after the submitted timestamp; approval keeps access open beyond that.")
     if not company_submissions:
