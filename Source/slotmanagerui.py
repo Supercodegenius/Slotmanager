@@ -1176,14 +1176,39 @@ else:
 
 st.subheader("Detailed Slot View")
 
+MENU_BUTTON_BG = "rgba(22, 31, 54, 0.85)"
+BRAND_ACCENT = "#FF6B6B"
+
 # Style the dataframe to highlight occupied slots with parrot green
 def style_occupied_slots(val):
     if val == "-":
         return ""
-    else:
-        return "background-color: #00A651; color: white; font-weight: bold;"
+    return "background-color: #00A651; color: white; font-weight: bold;"
 
-styled_grid = grid_df.style.applymap(style_occupied_slots)
+
+def style_student_slot_column(_val):
+    return f"background-color: {MENU_BUTTON_BG}; color: {BRAND_ACCENT}; font-weight: 600;"
+
+
+occupied_columns = [col for col in grid_df.columns if col != "Student Slot"]
+styled_grid = (
+    grid_df.style
+    .applymap(style_occupied_slots, subset=occupied_columns)
+    .applymap(style_student_slot_column, subset=["Student Slot"])
+)
+styled_grid = styled_grid.set_table_styles(
+    [
+        {
+            "selector": "th.col_heading.level0.col0",
+            "props": [
+                ("background-color", MENU_BUTTON_BG),
+                ("color", BRAND_ACCENT),
+                ("font-weight", "700"),
+            ],
+        }
+    ],
+    overwrite=False,
+)
 st.dataframe(styled_grid, use_container_width=True, hide_index=True)
 
 st.caption(f"XML storage file: {XML_PATH}")
